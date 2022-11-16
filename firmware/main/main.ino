@@ -26,6 +26,8 @@
  * SOFTWARE.
  */
 
+#include <avr/sleep.h>            // Power saving library
+
 /* 
  * Pins PB1 and PB0 on the ATTiny1616 are PWM, so analogWrite() should work on them
  * More about how the megaTinyCore lib maps the arduino pins: https://github.com/SpenceKonde/megaTinyCore/blob/master/megaavr/extras/ATtiny_x16.md
@@ -38,13 +40,17 @@
 enum State
 {
   ON = 0,
-  BREATH_5,
-  BREATH_2,
-  BREATH_0,
-  ALT_100,
-  ALT_50,
-  ALT_25,
-  DELAY,
+  BREATH_LO,
+  BREATH_MID,
+  BREATH_HI,
+  ALT_LO,
+  ALT_MID,
+  ALT_HI,
+  RUSH,
+  RAND_DELAY,
+  SOS,
+  SMOOTH,
+  SLEEP,
   MAX_STATE
 };
 
@@ -52,15 +58,25 @@ enum State
 State stat = ON;
 
 /* Forward declarations */
+void on();
 void breathing(int ms);
 void alternating(int ms);
-void on();
-void delay_fun();
+void rush(int ms);
+void rand_delay();
+void sos();
+void smooth();
 
 
 /* Interrupt Service Routines (ISRs) */
-void onPress();
-void wakeUp();
+void on_press();
+void go_to_sleep();
+
+
+void on()
+{
+  digitalWrite(RIGHT_EYE, LOW);
+  digitalWrite(LEFT_EYE, LOW);
+}
 
 /* Function definitions for the different light shows */
 
@@ -105,45 +121,182 @@ void alternating(int ms)
   delay(ms);
 }
 
-void on()
+void rush(int ms)
 {
+  State temp = stat;
+  for (float i = 0; i < 128.0F; i += 2.5F)
+  {
+    if (i >= 64.0F) { i += 3.0F; }
+    if (temp != stat) { break; }
+    analogWrite(RIGHT_EYE, 255 - i);
+    analogWrite(LEFT_EYE, 255);
+    delay(ms);
+    if (temp != stat) { break; }
+    analogWrite(RIGHT_EYE, 255);
+    analogWrite(LEFT_EYE, 255 - i);
+    delay(ms);
+  }
+  
+  for (int i = 0; i < 5; i++)
+  {
+    if (temp != stat) { break; }
+    digitalWrite(RIGHT_EYE, LOW);
+    digitalWrite(LEFT_EYE, HIGH);
+    delay(ms * 2);
+    if (temp != stat) { break; }
+    digitalWrite(RIGHT_EYE, HIGH);
+    digitalWrite(LEFT_EYE, LOW);
+    delay(ms * 2);
+  }
+
   digitalWrite(RIGHT_EYE, LOW);
   digitalWrite(LEFT_EYE, LOW);
 }
 
-void delay_fun()
+void rand_delay()
 {
-  unsigned long timer_1 = 500;
-  unsigned long last_timer_1;
-  unsigned long timer_2 = 300;
-  unsigned long last_timer_2;
+  unsigned long timer_1 = 570;
+  unsigned long last_timer_1 = 0;
+  unsigned long timer_2 = 350;
+  unsigned long last_timer_2 = 0;
   State temp = stat;
   while (temp == stat)
   {
     if (millis() - last_timer_1 >= timer_1)
     {
-      for (float i = 0; i < 256 * 5; i++)
+      float multiplier = random(6.0F);
+      for (float i = 0; i < 256 * multiplier; i++)
       {
-        analogWrite(RIGHT_EYE, (i / 5.0F));
+        if (temp != stat) { break ;}
+        analogWrite(RIGHT_EYE, (i / multiplier));
       }
-      last_timer_1 = millis();
+      last_timer_1 = millis() * random(500);
     }
 
     if (millis() - last_timer_2 >= timer_2)
     {
-      for (float i = 0; i < 256 * 3; i++)
+      float multiplier = random(6.0F);
+      for (float i = 0; i < 256 * multiplier; i++)
       {
-        analogWrite(LEFT_EYE, (i / 3.0F));
+        if (temp != stat) { break; }
+        analogWrite(LEFT_EYE, (i / multiplier));
       }
-      last_timer_2 = millis();
+      last_timer_2 = millis() * random(500);
     }
   }
 }
 
-void onPress()
+void sos(int ms)
+{
+  State temp = stat;
+  unsigned long timer = 400;
+  unsigned long last_timer = 0;
+  for (int i = 0; i < 3; i++)
+  {
+    if (temp != stat) { break; }
+    digitalWrite(RIGHT_EYE, LOW);
+    digitalWrite(LEFT_EYE, LOW);
+    delay(ms);
+    digitalWrite(RIGHT_EYE, HIGH);
+    digitalWrite(LEFT_EYE, HIGH);
+    delay(ms);
+  }
+
+  for (int i = 0; i < 3; i++)
+  {
+    if (temp != stat) { break; }
+    digitalWrite(RIGHT_EYE, LOW);
+    digitalWrite(LEFT_EYE, LOW);
+    delay(ms * 2);
+    digitalWrite(RIGHT_EYE, HIGH);
+    digitalWrite(LEFT_EYE, HIGH);
+    delay(ms * 2);
+  }
+
+  for (int i = 0; i < 3; i++)
+  {
+    if (temp != stat) { break; }
+    digitalWrite(RIGHT_EYE, LOW);
+    digitalWrite(LEFT_EYE, LOW);
+    delay(ms);
+    digitalWrite(RIGHT_EYE, HIGH);
+    digitalWrite(LEFT_EYE, HIGH);
+    delay(ms);
+  }
+  last_timer = millis();
+  while (temp == stat)
+  {
+    if (millis() - last_timer >= timer)
+    {
+      last_timer = millis();
+      break;
+    }
+  }
+}
+
+void smooth(int ms)
+{
+  State temp = stat;
+  int i = 0;
+  int j = 0;
+
+  for (i; i < 256; i++)
+  {
+    if (temp != stat) { break; }
+    if (i > 32) { i += 30; }
+    j = i - 8;
+    if (j < 0) { j = 0; }
+    analogWrite(RIGHT_EYE, 255 - i);
+    analogWrite(LEFT_EYE, 255 - j);
+    delay(ms);
+  }
+
+  i = 255;
+  j = 255;
+  for (i; i > 0; i--)
+  {
+    if (temp != stat) { break; }
+    if (i > 32) { i -= 30; }
+    j = i + 8;
+    if (j > 255) { j = 255; }
+    analogWrite(RIGHT_EYE, 255 - i);
+    analogWrite(LEFT_EYE, 255 - j);
+    delay(ms);
+  }
+  i = 0;
+  analogWrite(RIGHT_EYE, 255 - i);
+  j = 8;
+  for (j; j >= 0; j--)
+  {
+    if (temp != stat) { break; }
+    analogWrite(LEFT_EYE, 255 - j);
+    delay(ms);
+  }
+}
+
+void on_press()
 {
   stat = State(stat + 1);
   if (stat >= MAX_STATE) { stat = ON; }
+}
+
+void go_to_sleep()
+{
+  digitalWrite(RIGHT_EYE, HIGH);
+  digitalWrite(LEFT_EYE, HIGH);
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_enable();
+//  byte adcsra = ADCSRA;                             // save ADCSRA
+//  ADCSRA &= ~_BV(ADEN);                             // disable ADC
+  cli();                                            // stop interrupts to ensure the BOD timed sequence executes as required
+//  byte mcucr1 = MCUCR | _BV(BODS) | _BV(BODSE);     //turn off the brown-out detector
+//  byte mcucr2 = mcucr1 & ~_BV(BODSE);
+//  MCUCR = mcucr1;
+//  MCUCR = mcucr2;
+  sei();                                            // ensure interrupts enabled so we can wake up again
+  sleep_cpu();                                      // go to sleep
+  sleep_disable();                                  // wake up here
+//  ADCSRA = adcsra;                                  // restore ADCSRA
 }
 
 void setup()
@@ -152,8 +305,23 @@ void setup()
   pinMode(RIGHT_EYE, OUTPUT);
   pinMode(LEFT_EYE, OUTPUT);
   pinMode(BUTTON, INPUT);
-
-  attachInterrupt(digitalPinToInterrupt(BUTTON), onPress, RISING);
+  /* Disable floating pins */
+  pinMode(PIN_PA1 ,INPUT_PULLUP);
+  pinMode(PIN_PA2 ,INPUT_PULLUP);
+  pinMode(PIN_PA3 ,INPUT_PULLUP);
+  pinMode(PIN_PA4 ,INPUT_PULLUP);
+  pinMode(PIN_PA5 ,INPUT_PULLUP);
+  pinMode(PIN_PA6 ,INPUT_PULLUP);
+  pinMode(PIN_PA7 ,INPUT_PULLUP);
+  pinMode(PIN_PB2 ,INPUT_PULLUP);
+  pinMode(PIN_PB3 ,INPUT_PULLUP);
+  pinMode(PIN_PB4 ,INPUT_PULLUP);
+  pinMode(PIN_PB5 ,INPUT_PULLUP);
+  pinMode(PIN_PC0 ,INPUT_PULLUP);
+  pinMode(PIN_PC1 ,INPUT_PULLUP);
+  pinMode(PIN_PC3 ,INPUT_PULLUP);
+  
+  attachInterrupt(digitalPinToInterrupt(BUTTON), on_press, RISING);
 }
 
 void loop()
@@ -163,26 +331,38 @@ void loop()
     case ON:
       on();
       break;
-    case BREATH_5:
+    case BREATH_LO:
       breathing(5);
       break;
-    case BREATH_2:
+    case BREATH_MID:
       breathing(2);
       break;
-    case BREATH_0:
+    case BREATH_HI:
       breathing(0);
       break;
-    case ALT_100:
+    case ALT_LO:
       alternating(100);
       break;
-    case ALT_50:
+    case ALT_MID:
       alternating(50);
       break;
-    case ALT_25:
+    case ALT_HI:
       alternating(25);
       break;
-    case DELAY:
-      delay_fun();
+    case RUSH:
+      rush(50);
+      break;
+    case RAND_DELAY:
+      rand_delay();
+      break;
+    case SOS:
+      sos(100);
+      break;
+    case SMOOTH:
+      smooth(50);
+      break;
+    case SLEEP:
+      go_to_sleep();
       break;
     default:
       break;
