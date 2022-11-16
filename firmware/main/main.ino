@@ -341,20 +341,20 @@ void setup()
   pinMode(LEFT_EYE, OUTPUT);
   pinMode(BUTTON, INPUT);
   /* Disable floating pins */
-  pinMode(PIN_PA1 ,INPUT_PULLUP);
-  pinMode(PIN_PA2 ,INPUT_PULLUP);
-  pinMode(PIN_PA3 ,INPUT_PULLUP);
-  pinMode(PIN_PA4 ,INPUT_PULLUP);
-  pinMode(PIN_PA5 ,INPUT_PULLUP);
-  pinMode(PIN_PA6 ,INPUT_PULLUP);
-  pinMode(PIN_PA7 ,INPUT_PULLUP);
-  pinMode(PIN_PB2 ,INPUT_PULLUP);
-  pinMode(PIN_PB3 ,INPUT_PULLUP);
-  pinMode(PIN_PB4 ,INPUT_PULLUP);
-  pinMode(PIN_PB5 ,INPUT_PULLUP);
-  pinMode(PIN_PC0 ,INPUT_PULLUP);
-  pinMode(PIN_PC1 ,INPUT_PULLUP);
-  pinMode(PIN_PC3 ,INPUT_PULLUP);
+  pinMode(PIN_PA1, INPUT_PULLUP);
+  pinMode(PIN_PA2, INPUT_PULLUP);
+  pinMode(PIN_PA3, INPUT_PULLUP);
+  pinMode(PIN_PA4, INPUT_PULLUP);
+  pinMode(PIN_PA5, INPUT_PULLUP);
+  pinMode(PIN_PA6, INPUT_PULLUP);
+  pinMode(PIN_PA7, INPUT_PULLUP);
+  pinMode(PIN_PB2, INPUT_PULLUP);
+  pinMode(PIN_PB3, INPUT_PULLUP);
+  pinMode(PIN_PB4, INPUT_PULLUP);
+  pinMode(PIN_PB5, INPUT_PULLUP);
+  pinMode(PIN_PC0, INPUT_PULLUP);
+  pinMode(PIN_PC1, INPUT_PULLUP);
+  pinMode(PIN_PC3, INPUT_PULLUP);
   
   attachInterrupt(digitalPinToInterrupt(BUTTON), on_press, RISING);
 }
