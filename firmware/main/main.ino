@@ -121,6 +121,12 @@ void alternating(int ms)
   delay(ms);
 }
 
+/*
+ * @brief Light show that alternates both LEDs on/off from dim to bright.
+ * 
+ * @param ms Delay in milliseconds
+ * @return Void
+ */
 void rush(int ms)
 {
   State temp = stat;
@@ -153,6 +159,11 @@ void rush(int ms)
   digitalWrite(LEFT_EYE, LOW);
 }
 
+/*
+ * @brief Light show that lights each LED at random intervals.
+ * 
+ * @return Void
+ */
 void rand_delay()
 {
   unsigned long timer_1 = 570;
@@ -186,6 +197,12 @@ void rand_delay()
   }
 }
 
+/*
+ * @brief Light show that emits SOS in morse code.
+ * 
+ * @param ms Delay in milliseconds
+ * @return Void
+ */
 void sos(int ms)
 {
   State temp = stat;
@@ -234,6 +251,12 @@ void sos(int ms)
   }
 }
 
+/*
+ * @brief Light show that transitions smoothly between both LEDs on board.
+ * 
+ * @param ms Delay in milliseconds
+ * @return Void
+ */
 void smooth(int ms)
 {
   State temp = stat;
@@ -274,29 +297,41 @@ void smooth(int ms)
   }
 }
 
+/*
+ * @brief ISR called when a button is pressed.
+ * 
+ * @return Void
+ */
 void on_press()
 {
   stat = State(stat + 1);
   if (stat >= MAX_STATE) { stat = ON; }
 }
 
+/*
+ * @brief Last mode of the device. Shuts down LEDs and goes to sleep.
+ * 
+ * @return Void
+ */
 void go_to_sleep()
 {
   digitalWrite(RIGHT_EYE, HIGH);
   digitalWrite(LEFT_EYE, HIGH);
   set_sleep_mode(SLEEP_MODE_PWR_DOWN);
   sleep_enable();
-//  byte adcsra = ADCSRA;                             // save ADCSRA
-//  ADCSRA &= ~_BV(ADEN);                             // disable ADC
-  cli();                                            // stop interrupts to ensure the BOD timed sequence executes as required
-//  byte mcucr1 = MCUCR | _BV(BODS) | _BV(BODSE);     //turn off the brown-out detector
-//  byte mcucr2 = mcucr1 & ~_BV(BODSE);
-//  MCUCR = mcucr1;
-//  MCUCR = mcucr2;
-  sei();                                            // ensure interrupts enabled so we can wake up again
-  sleep_cpu();                                      // go to sleep
-  sleep_disable();                                  // wake up here
-//  ADCSRA = adcsra;                                  // restore ADCSRA
+  // TODO: research these parameters for the ATTiny1616. For some reason
+  // these guys aren't defined for this MCU. Look into the avr/sleep.h implementation.
+  //  byte adcsra = ADCSRA;                             // save ADCSRA
+  //  ADCSRA &= ~_BV(ADEN);                             // disable ADC
+  cli();                                                 // stop interrupts to ensure the BOD timed sequence executes as required
+  //  byte mcucr1 = MCUCR | _BV(BODS) | _BV(BODSE);     //turn off the brown-out detector
+  //  byte mcucr2 = mcucr1 & ~_BV(BODSE);
+  //  MCUCR = mcucr1;
+  //  MCUCR = mcucr2;
+  sei();                                                // ensure interrupts enabled so we can wake up again
+  sleep_cpu();                                          // go to sleep
+  sleep_disable();                                      // wake up here
+  //  ADCSRA = adcsra;                                  // restore ADCSRA
 }
 
 void setup()
