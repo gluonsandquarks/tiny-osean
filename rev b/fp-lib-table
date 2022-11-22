@@ -1,0 +1,4 @@
+(fp_lib_table
+  (lib (name "nudekov3")(type "KiCad")(uri "${KIPRJMOD}/nudekov3.pretty")(options "")(descr ""))
+  (lib (name "tiny-osean")(type "KiCad")(uri "${KIPRJMOD}/tiny-osean.pretty")(options "")(descr ""))
+)
